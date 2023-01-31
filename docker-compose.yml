@@ -1,0 +1,59 @@
+version: '4'
+
+services:
+  db:
+
+    image: postgres
+    environment:
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=12345
+    ports:
+      - "5432:5432"
+      - 
+  app-authors:
+    image: jaimesalvador/app-author:1.0.0
+
+    environment:
+      - POSTGRES_URL=jdbc:postgresql://db:5432/distribuida
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=12345
+    depends_on:
+          - db
+    labels:
+      - "traefik.enable=true"
+      #- "traefik.http.routers.app-authors.entrypoints=web"
+      - "traefik.http.routers.app-authors.rule=Host(`app-authors`)"
+    ports:
+      - "8080:80"
+
+  app-books:
+    image: jaimesalvador/app-books:1.0.0
+
+    environment:
+      - POSTGRES_URL=jdbc:postgresql://db:5432/distribuida
+      - POSTGRES_USERNAME=postgres
+      - POSTGRES_PASSWORD=12345
+    depends_on:
+      - db
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-book.rule=Host(`app-book`)"
+      #- "traefik.http.routers.app-book.entrypoints=web"
+    ports:
+      - "9090:80"
+
+
+
+
+  traefik:
+    image: "traefik:v3.0"
+    
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:9090" 
+    ports:
+      - "6099:8080"
+
